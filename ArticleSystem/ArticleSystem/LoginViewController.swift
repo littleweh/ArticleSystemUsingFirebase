@@ -108,6 +108,7 @@ class LoginViewController: UIViewController {
         view.addSubview(containerView)
         view.addSubview(loginRegisterSegmentedControl)
         
+        self.navigationItem.title = NSLocalizedString("Join Us", comment: "login page navigationbar title")
         
         setupLoginRegisterButton()
         setupContainerView()
@@ -264,7 +265,24 @@ extension LoginViewController {
     }
     
     func handleLogin() {
+        guard
+            let email = emailTextField.text,
+            let password = passwordTextField.text
+        else {
+            // ToDo: notification to user
+            return
+        }
         
+        Auth.auth().signIn(
+            withEmail: email,
+            password: password) {
+            (user, error) in
+                if error != nil {
+                    print(error?.localizedDescription)
+                    return
+                }
+                print("successfully logged in")
+        }
     }
     
     func handleRegister() {
