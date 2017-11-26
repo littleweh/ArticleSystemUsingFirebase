@@ -36,26 +36,35 @@ class LoginViewController: UIViewController {
             NSLocalizedString(title, comment: ""),
             for: .normal
         )
-
+        
+        firstNameTextFieldHeightConstraint.isActive = false
+        lastNameTextFieldHeightConstraint.isActive = false
+        emailTextFieldHeightConstraint.isActive = false
+        passwordTextFieldHeightConstraint.isActive = false
+        
         if loginRegisterSegmentedControl.selectedSegmentIndex == 0 { //login
             containerViewHeightConstraint.constant = 100
-            firstNameTextFieldHeightConstraint.isActive = false
-            lastNameTextFieldHeightConstraint.isActive = false
-            emailTextFieldHeightConstraint.isActive = false
-            passwordTextFieldHeightConstraint.isActive = false
-
+            
             firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalToConstant: 0)
             lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalToConstant: 0)
             emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
             passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
 
-            NSLayoutConstraint.activate([
-                firstNameTextFieldHeightConstraint,
-                lastNameTextFieldHeightConstraint,
-                emailTextFieldHeightConstraint,
-                passwordTextFieldHeightConstraint
-            ])
+            
+        } else {
+            containerViewHeightConstraint.constant = 200
+            
+            firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
         }
+        NSLayoutConstraint.activate([
+            firstNameTextFieldHeightConstraint,
+            lastNameTextFieldHeightConstraint,
+            emailTextFieldHeightConstraint,
+            passwordTextFieldHeightConstraint
+        ])
     }
     
     let loginRegisterButton: UIButton = {
