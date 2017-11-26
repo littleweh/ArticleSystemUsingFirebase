@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import Firebase
+typealias Object = [String: Any]
 
 class LoginViewController: UIViewController {
     
@@ -27,53 +29,14 @@ class LoginViewController: UIViewController {
         return segmentedControl
     }()
     
-    @objc func handleLoginRegisterChange() {
-        // loginRegisterButton text change
-        guard
-            let title = loginRegisterSegmentedControl.titleForSegment(at: loginRegisterSegmentedControl.selectedSegmentIndex)
-        else { return }
-        loginRegisterButton.setTitle(
-            NSLocalizedString(title, comment: ""),
-            for: .normal
-        )
-        
-        firstNameTextFieldHeightConstraint.isActive = false
-        lastNameTextFieldHeightConstraint.isActive = false
-        emailTextFieldHeightConstraint.isActive = false
-        passwordTextFieldHeightConstraint.isActive = false
-        
-        if loginRegisterSegmentedControl.selectedSegmentIndex == 0 { //login
-            containerViewHeightConstraint.constant = 100
-            
-            firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalToConstant: 0)
-            lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalToConstant: 0)
-            emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
-            passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
-
-            
-        } else {
-            containerViewHeightConstraint.constant = 200
-            
-            firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
-            lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
-            emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
-            passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
-        }
-        NSLayoutConstraint.activate([
-            firstNameTextFieldHeightConstraint,
-            lastNameTextFieldHeightConstraint,
-            emailTextFieldHeightConstraint,
-            passwordTextFieldHeightConstraint
-        ])
-    }
-    
-    let loginRegisterButton: UIButton = {
+    lazy var loginRegisterButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .yellow
         button.setTitle(NSLocalizedString("Register", comment: ""), for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(handleLoginRegister), for: .touchUpInside)
         return button
     }()
     
@@ -149,6 +112,46 @@ class LoginViewController: UIViewController {
         setupLoginRegisterButton()
         setupContainerView()
         setupLoginRegisterSegmentedControl()
+    }
+    
+    @objc func handleLoginRegisterChange() {
+        // loginRegisterButton text change
+        guard
+            let title = loginRegisterSegmentedControl.titleForSegment(at: loginRegisterSegmentedControl.selectedSegmentIndex)
+            else { return }
+        loginRegisterButton.setTitle(
+            NSLocalizedString(title, comment: ""),
+            for: .normal
+        )
+        
+        firstNameTextFieldHeightConstraint.isActive = false
+        lastNameTextFieldHeightConstraint.isActive = false
+        emailTextFieldHeightConstraint.isActive = false
+        passwordTextFieldHeightConstraint.isActive = false
+        
+        if loginRegisterSegmentedControl.selectedSegmentIndex == 0 { //login
+            containerViewHeightConstraint.constant = 100
+            
+            firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalToConstant: 0)
+            lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalToConstant: 0)
+            emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
+            passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/2)
+            
+            
+        } else {
+            containerViewHeightConstraint.constant = 200
+            
+            firstNameTextFieldHeightConstraint = firstNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            lastNameTextFieldHeightConstraint = lastNameTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            emailTextFieldHeightConstraint = emailTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+            passwordTextFieldHeightConstraint = passwordTextField.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 1/4)
+        }
+        NSLayoutConstraint.activate([
+            firstNameTextFieldHeightConstraint,
+            lastNameTextFieldHeightConstraint,
+            emailTextFieldHeightConstraint,
+            passwordTextFieldHeightConstraint
+            ])
     }
     
     func setupLoginRegisterSegmentedControl() {
@@ -247,8 +250,63 @@ class LoginViewController: UIViewController {
             loginRegisterButton.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 20)
         ])
     }
-    
-    
+}
 
+extension LoginViewController {
+    // firebase login/register
+
+    @objc func handleLoginRegister() {
+        if loginRegisterSegmentedControl.selectedSegmentIndex == 0 {
+            handleLogin()
+        } else {
+            handleRegister()
+        }
+    }
     
+    func handleLogin() {
+        
+    }
+    
+    func handleRegister() {
+        guard
+            let firstName = firstNameTextField.text,
+            let lastName = lastNameTextField.text,
+            let email = emailTextField.text,
+            let password = passwordTextField.text
+        else {
+            // ToDo: notification to user
+            return
+        }
+        
+        Auth.auth().createUser(
+        withEmail: email,
+        password: password
+        ) { (user, error) in
+            if error != nil {
+                print(error?.localizedDescription)
+                return
+            }
+            guard
+                let uid = user?.uid
+            else { return }
+            
+            let reference = Database.database().reference()
+            let usersReference = Database.database().reference().child("users").child(uid)
+            
+            let value: Object = [
+                "first_name": firstName,
+                "last_name": lastName,
+                "email": email
+            ]
+            
+            usersReference.updateChildValues(value, withCompletionBlock: { (error, reference) in
+                if error != nil {
+                    print(error)
+                    return
+                }
+                print("register successfully")
+            })
+        }
+        
+    }
 }
