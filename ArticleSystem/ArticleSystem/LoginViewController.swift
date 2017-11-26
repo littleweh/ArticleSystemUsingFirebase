@@ -282,6 +282,8 @@ extension LoginViewController {
                     return
                 }
                 print("successfully logged in")
+                self.updateRootViewController()
+
         }
     }
     
@@ -323,8 +325,14 @@ extension LoginViewController {
                     return
                 }
                 print("register successfully")
+                self.updateRootViewController()
             })
         }
         
+    }
+    func updateRootViewController() {
+        let viewController = ReadArticlesViewController()
+        let readAriticleNavigationControler = UINavigationController(rootViewController: viewController)
+        present(readAriticleNavigationControler, animated: true, completion: nil)
     }
 }
