@@ -8,162 +8,164 @@
 
 import UIKit
 import Firebase
+typealias Object = [String: Any]
 
 class TestArrayViewController: UIViewController {
     
-    let arrayToBeUploaded = ["one", "two", "three", "four", "five"]
-    let user1 = User(
-        firstName: "Candy",
-        lastName: "Crush",
-        email: "candycrush@gmail.com",
-        nickName: "C.C."
-    )
-    let user2 = User(
-        firstName: "Lucifer",
-        lastName: "MorningStar",
-        email: "devil@gmail.com",
-        nickName: "FabulousMe"
-    )
-    
-    let user3 = User(
-        firstName: "Cloe",
-        lastName: "Deckor",
-        email: "cloeD@gmail.com",
-        nickName: "detective"
-    )
-    
-    let uploadArrayButton: UIButton = {
-        let button = UIButton()
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("upload", for: .normal)
-        button.backgroundColor = .black
-        button.addTarget(self, action: #selector(uploadWithPriority), for: .touchUpInside)
-        return button
-    }()
-    
-    let readArrayButton: UIButton = {
-        let button = UIButton()
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("read", for: .normal)
-        button.backgroundColor = .black
-        button.addTarget(self, action: #selector(readSimpleArray), for: .touchUpInside)
-        return button
-    }()
+    let numberStrings = ["one", "two", "three", "four", "five"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .gray
-        self.navigationItem.title = "Array"
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: NSLocalizedString("Logout", comment: ""), style: .plain, target: self, action: #selector(signOut))
         
-        view.addSubview(readArrayButton)
-        view.addSubview(uploadArrayButton)
+        uploadSimpleArray()
+        readSimpleArray()
         
-        setupReadButton()
-        setupUploadButton()
+        uploadWithPushID()
+        readPushIDArray()
+
+        uploadWithPriority()
+        readWithPriority()
+
+        uploadWithTimeStampsAsKey()
+        readWithTimeStampsAsKeys()
+        
     }
     
-    @objc func readSimpleArray() {
-        let reference = Database.database().reference().child("TestArray")
+    // 1. upload numberStrings
+    func uploadSimpleArray() {
+        let reference = Database.database().reference()
+        reference.setValue(["NumberStrings": numberStrings])
+        print("1. upload numberStrings completed")
+    }
+
+    // 2. read numberStrings
+    func readSimpleArray() {
+        let reference = Database.database().reference().child("NumberStrings")
         reference.observe(.value) { (snapshot) in
+            print("-----snapshot.value-----")
             print(snapshot.value)
-            var testArray: [String] = []
+            var readNumberStrings: [String] = []
             guard
                 let array = snapshot.value as? [String?]
             else { return }
+
             for element in array {
                 if let arrayElement = element {
-                    testArray.append(arrayElement)
+                    readNumberStrings.append(arrayElement)
                 }
             }
-            print(testArray)
+            print(readNumberStrings)
         }
     }
     
-    @objc func uploadSimpleArray() {
-        let reference = Database.database().reference(withPath: "UploadSimpleArray")
-        reference.setValue(["TestArrayUpload": arrayToBeUploaded])
-        print("upload complete")
-    }
-    
-    @objc func uploadObjectArray() {
-        let users = [user1, user2, user3, user2, user1]
-        var userObjects: [Object] = []
-        for user in users {
-            let userObject = toObject(from: user)
-            userObjects.append(userObject)
-        }
+    // 3. upload five to eight with pushID
+    func uploadWithPushID() {
+        let reference = Database.database().reference(withPath: "fiveToEightWithPushID")
+        let fiveToEight = ["five","six","seven","eight"]
         
-        let reference = Database.database().reference(withPath: "UploadObjectArray")
-        reference.setValue(userObjects)
-        
-        print("completed user object array upload")
-        
-    }
-    
-    @objc func uploadWithPushID() {
-        let reference = Database.database().reference(withPath: "UploadObjectArrayWithPushID")
-
-        let users = [user1, user2, user3, user2, user3]
-
-        for user in users {
+        for element in fiveToEight {
             let childReferenece = reference.childByAutoId()
-            let userObject = toObject(from: user)
-            childReferenece.setValue(userObject)
+            childReferenece.setValue(element)
+            print(element)
         }
     }
     
-    @objc func uploadWithPriority() {
-        let reference = Database.database().reference(withPath: "UploadObjectArrayWithPriority")
-        
-        let users = [user1, user2, user3, user2, user2, user3]
-        
-        for (index, value) in users.enumerated() {
-            let childReferenece = reference.child("user \(index + 1)")
-            let userObject = toObject(from: value)
-            childReferenece.setValue(userObject, andPriority: index)
-        }
-        reference.observe(.value) { (snapshot) in
+    // 4. read five to eight with pushID
+    func readPushIDArray() {
+        let reference = Database.database().reference().child("fiveToEightWithPushID")
+        reference.queryOrderedByKey().observe(.value) { (snapshot) in
+            print("------read five to eight with pushID-------")
             print(snapshot.value)
+            var numbers: [String] = []
+            guard
+                let objects = snapshot.value as? Object
+            else { return }
+            for (key, value) in objects {
+                guard
+                    let number = value as? String
+                else { continue }
+                numbers.append(number)
+            }
+            print(numbers)
+            print(numbers.count)
         }
+    }
+    
+    // 5. upload with priority
+    func uploadWithPriority() {
+        let nineToTwelve = ["nine", "ten", "eleven", "twelve"]
+        let reference = Database.database().reference(withPath: "nineToTwelve")
         
+        for (index, value) in nineToTwelve.enumerated() {
+            let childReferenece = reference.child("array \(index + 1)")
+            childReferenece.setValue(value, andPriority: index)
+        }
     }
     
-    
-    func setupReadButton() {
-        NSLayoutConstraint.activate([
-            readArrayButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            readArrayButton.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
-            readArrayButton.widthAnchor.constraint(equalToConstant: 150),
-            readArrayButton.heightAnchor.constraint(equalToConstant: 100)
-        ])
+    // 6. read with priority
+    func readWithPriority() {
+        let reference = Database.database().reference(withPath: "nineToTwelve")
+        var numbers: [String] = []
+        reference.queryOrderedByPriority().observe(.value, with: {(snapshot) in
+            print("------read nine to Twelve----------")
+            print(snapshot.value)
+            guard
+                let objects = snapshot.value as? Object
+                else { return}
+            for (key, value) in objects {
+                guard
+                    let number = value as? String
+                else { continue }
+                numbers.append(number)
+            }
+            print(numbers)
+            print(numbers.count)
+        })
     }
-    
-    func setupUploadButton() {
-        NSLayoutConstraint.activate([
-            uploadArrayButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            uploadArrayButton.topAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
-            uploadArrayButton.widthAnchor.constraint(equalToConstant: 150),
-            uploadArrayButton.heightAnchor.constraint(equalToConstant: 100)
-            ])
-    }
-    
-    @objc func signOut() {
+
+    // 7. upload abcd
+    func uploadWithTimeStampsAsKey() {
+        let alphabetAToD = ["alpha", "beta", "charlie", "delta"]
         
+        let reference = Database.database().reference(withPath: "alphabetA-D")
+        
+        for alphabet in alphabetAToD {
+            let childReference = reference.childByAutoId()
+            let object: Object = [
+                "timestamp": ServerValue.timestamp(),
+                "alphabet": alphabet
+            ]
+            childReference.setValue(object)
+        }
     }
     
-    func toObject(from user: User) -> Object {
-        let firstName = user.firstName
-        let lastName = user.lastName
-        let nickName = user.nickName
-        let email = user.email
-        let object = [
-            "firstName": firstName,
-            "lastName": lastName,
-            "nickName": nickName,
-            "email": email
-        ]
-        return object
+    // 8. read abcd
+    func readWithTimeStampsAsKeys() {
+        let reference = Database.database().reference(withPath: "alphabetA-D")
+        var alphabets: [String] = []
+        reference.observe(.value, with: {(snapshot) in
+            print(snapshot.value)
+            guard
+                let rootObjects = snapshot.value as? Object,
+                let objects = rootObjects.values as? Object
+            else { return }
+            print("--objects''")
+            print(objects)
+//            for (key, value) in objects {
+//                guard
+//                    let object = value as? Object,
+//                    let alphabet = object["alphabet"] as? String
+//                else { continue }
+//                print(object)
+//                alphabets.append(alphabet)
+//            }
+//            print(alphabets)
+//            print(alphabets.count)
+        })
+
     }
+    
+    
+    
 
 }
