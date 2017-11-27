@@ -331,7 +331,7 @@ extension LoginViewController {
         
     }
     func updateRootViewController() {
-        let viewController = ReadArticlesViewController()
+        let viewController = ArticlesViewController()
         let readAriticleNavigationControler = UINavigationController(rootViewController: viewController)
         present(readAriticleNavigationControler, animated: true, completion: nil)
     }
